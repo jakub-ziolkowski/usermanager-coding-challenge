@@ -127,7 +127,7 @@ class UserManagementRestApiTest {
         // when
         response = api.searchEmployees("grade>2");
         // then
-        assertEquals(response.size(), 3);
+        assertEquals(response.size(), 4);
 
         // when
         response = api.searchEmployees("salary>5000,name:Linus");
