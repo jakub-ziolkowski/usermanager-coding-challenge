@@ -51,7 +51,7 @@ class UserManagementRestApiTest {
         // then
         assertNotNull(response.getId());
 
-        Employee employee = repository.findById(response.getId()).get();
+        Employee employee = repository.findById(response.getId()).orElse(null);
 
         assertNotNull(employee);
         assertEquals(employee.getName(), "John");
@@ -70,7 +70,7 @@ class UserManagementRestApiTest {
         String expectedMessage = "could not execute statement; SQL [n/a]; constraint [null]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement";
         String actualMessage = e.getMessage();
 
-        assertTrue(actualMessage.equals(expectedMessage));
+        assertEquals(actualMessage, expectedMessage);
 
     }
 

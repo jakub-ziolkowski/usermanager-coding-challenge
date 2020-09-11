@@ -1,5 +1,6 @@
 package com.hsbc.usermanager.api.responses;
 
+import com.hsbc.usermanager.data.entity.Employee;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -22,6 +23,15 @@ public class CreateEmployeeApiResponse {
     private Integer salary;
 
     public CreateEmployeeApiResponse() {
+    }
+
+    public CreateEmployeeApiResponse(Employee e) {
+        super();
+        setId(e.getId());
+        setName(e.getName());
+        setSurname(e.getSurname());
+        setGrade(e.getGrade());
+        setSalary(e.getSalary());
     }
 
     public Integer getId() {

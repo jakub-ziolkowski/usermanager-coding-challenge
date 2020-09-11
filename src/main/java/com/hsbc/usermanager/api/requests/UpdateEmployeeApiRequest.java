@@ -1,7 +1,9 @@
 package com.hsbc.usermanager.api.requests;
 
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+@ApiModel
 public class UpdateEmployeeApiRequest {
 
     @ApiModelProperty(position = 1, notes = "Employee first name", required = true, example = "First name")

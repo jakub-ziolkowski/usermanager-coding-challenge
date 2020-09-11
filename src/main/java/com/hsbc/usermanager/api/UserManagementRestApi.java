@@ -3,6 +3,7 @@ package com.hsbc.usermanager.api;
 import com.hsbc.usermanager.api.requests.CreateEmployeeApiRequest;
 import com.hsbc.usermanager.api.requests.UpdateEmployeeApiRequest;
 import com.hsbc.usermanager.api.responses.CreateEmployeeApiResponse;
+import com.hsbc.usermanager.api.responses.DeleteEmployeeApiResponse;
 import com.hsbc.usermanager.api.responses.GetEmployeeApiResponse;
 import com.hsbc.usermanager.api.responses.UpdateEmployeeApiResponse;
 import com.hsbc.usermanager.data.entity.Employee;
@@ -21,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-@Api(description = "REST API of Simple User Management")
+@Api
 public class UserManagementRestApi {
 
     @Autowired
@@ -52,15 +53,7 @@ public class UserManagementRestApi {
         e.setDeleted(false);
 
         Employee saved = employeeRepository.save(e);
-
-        CreateEmployeeApiResponse createEmployeeApiResponse = new CreateEmployeeApiResponse();
-        createEmployeeApiResponse.setId(saved.getId());
-        createEmployeeApiResponse.setName(saved.getName());
-        createEmployeeApiResponse.setSurname(saved.getSurname());
-        createEmployeeApiResponse.setGrade(saved.getGrade());
-        createEmployeeApiResponse.setSalary(saved.getSalary());
-
-        return createEmployeeApiResponse;
+        return new CreateEmployeeApiResponse(saved);
     }
 
     @ApiOperation(
@@ -124,13 +117,13 @@ public class UserManagementRestApi {
         employee.setSalary(updateEmployeeApiRequest.getSalary());
 
         employeeRepository.save(employee);
-        return new UpdateEmployeeApiResponse();
+        return new UpdateEmployeeApiResponse(employee);
     }
 
     @ApiOperation(
             value = "Deletes data of Employee of given id",
             notes = "When Employee is not found, an exception will be thrown",
-            response = GetEmployeeApiResponse.class
+            response = DeleteEmployeeApiResponse.class
     )
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully deleted Employee data"),
@@ -140,15 +133,20 @@ public class UserManagementRestApi {
     @RequestMapping(value = "/user/{id}", method = RequestMethod.DELETE, produces = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public @ResponseBody
-    GetEmployeeApiResponse deleteEmployee(
+    DeleteEmployeeApiResponse deleteEmployee(
             @ApiParam(value = "Employee id", required = true)
             @PathVariable String id
     ) {
         Employee employee = employeeRepository.findById(Integer.valueOf(id))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find User with id: ".concat(id)));
+
+        if (employee.getDeleted()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unable to find User with id: ".concat(id));
+        }
+
         employee.setDeleted(true);
         employeeRepository.save(employee);
-        return new GetEmployeeApiResponse();
+        return new DeleteEmployeeApiResponse(employee);
     }
 
     @ApiOperation(
@@ -181,17 +179,18 @@ public class UserManagementRestApi {
         List<GetEmployeeApiResponse> getEmployeeApiResponses = new ArrayList<>();
 
         EmployeeSpecificationBuilder builder = new EmployeeSpecificationBuilder();
-        Pattern pattern = Pattern.compile("(\\w+?)(:|<|>)(\\w+?),");
+        Pattern pattern = Pattern.compile("(\\w+?)([:<>])(\\w+?),");
+        //Pattern pattern = Pattern.compile("(\\w+?)(:|<|>)(\\w+?),");
         Matcher matcher = pattern.matcher(query + ",");
         while (matcher.find()) {
             builder.with(matcher.group(1), matcher.group(2), matcher.group(3));
         }
 
+        builder.with("deleted", ":", false);
+
         Specification<Employee> spec = builder.build();
         List<Employee> results = employeeRepository.findAll(spec);
-        results.forEach(employee -> {
-            getEmployeeApiResponses.add(new GetEmployeeApiResponse(employee));
-        });
+        results.forEach(employee -> getEmployeeApiResponses.add(new GetEmployeeApiResponse(employee)));
 
         return getEmployeeApiResponses;
     }
